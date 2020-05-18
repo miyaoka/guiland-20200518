@@ -5,18 +5,64 @@
 
     <section class="control">
       <label>
-        turn: {{ turn }}
+        turn
+        <p>{{ turnIndex }}</p>
         <input
           v-model.number="turnIndex"
           type="range"
           min="0"
-          :max="turns.length"
+          :max="turns.length - 1"
           step="1"
+        />
+      </label>
+
+      <label>
+        filter
+        <input v-model="useFilter" type="checkbox" />
+      </label>
+
+      <label>
+        blur
+        <p>{{ blur }}</p>
+        <input v-model.number="blur" type="range" min="1" max="30" step="1" />
+      </label>
+      <label>
+        stoneScale
+        <p>{{ stoneScale.toFixed(2) }}</p>
+        <input
+          v-model.number="stoneScale"
+          type="range"
+          min="0.5"
+          max="2"
+          step="any"
         />
       </label>
     </section>
 
-    <div class="board">
+    <svg>
+      <defs>
+        <filter id="blur">
+          <feGaussianBlur
+            in="SourceGraphic"
+            :stdDeviation="blur"
+            result="blur"
+          />
+          <feComposite in="SourceGraphic" in2="matrix" operator="atop" />
+        </filter>
+
+        <filter id="colormatrix">
+          <feColorMatrix
+            in="blur"
+            mode="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9"
+            result="matrix"
+          />
+          <feComposite in="SourceGraphic" in2="matrix" operator="atop" />
+        </filter>
+      </defs>
+    </svg>
+
+    <div class="board" :class="{ useFilter }">
       <div class="lines">
         <div
           v-for="i in [...Array(19)].keys()"
@@ -31,12 +77,26 @@
           :style="getLineStyleH(i)"
         ></div>
 
-        <div
-          v-for="(item, i) in turns.slice(0, turnIndex)"
-          :key="i"
-          class="stone"
-          :style="getStoneStyle(item)"
-        ></div>
+        <div class="stoneContainerContainer">
+          <div class="stoneContainer">
+            <div
+              v-for="(item, i) in turnsBlack"
+              :key="i"
+              class="stone"
+              :style="getStoneStyle(item)"
+            ></div>
+          </div>
+        </div>
+        <div class="stoneContainerContainer">
+          <div class="stoneContainer">
+            <div
+              v-for="(item, i) in turnsWhite"
+              :key="i"
+              class="stone"
+              :style="getStoneStyle(item)"
+            ></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -51,12 +111,25 @@ const kifuData = `(;GM[1]FF[4]SZ[19]PB[林立祥]BR[七段]PW[許皓鋐]WR[六�
 
 type KifuTurn = readonly [string, number, number]
 
+const unitSize = 40
+
 export default Vue.extend({
   data() {
     return {
       turnIndex: 0,
       turns: [] as KifuTurn[],
+      blur: 10,
+      stoneScale: 1,
+      useFilter: true,
     }
+  },
+  computed: {
+    turnsBlack(): KifuTurn[] {
+      return this.turns.slice(0, this.turnIndex).filter(([bw]) => bw === 'B')
+    },
+    turnsWhite(): KifuTurn[] {
+      return this.turns.slice(0, this.turnIndex).filter(([bw]) => bw === 'W')
+    },
   },
   mounted() {
     this.loadKifu(kifuData)
@@ -64,37 +137,48 @@ export default Vue.extend({
   methods: {
     getStoneStyle(turn: KifuTurn) {
       const [bw, x, y] = turn
+      const stoneScale = this.useFilter ? this.stoneScale : 0.85
       return {
-        left: `${(x - 0.5) * 20}px`,
-        top: `${(y - 0.5) * 20}px`,
+        left: `${(x - 0.5) * unitSize}px`,
+        top: `${(y - 0.5) * unitSize}px`,
         background: bw === 'B' ? '#000' : '#fff',
+        width: `${stoneScale * unitSize}px`,
+        height: `${stoneScale * unitSize}px`,
       }
     },
     getLineStyleH(i: number) {
       return {
         left: 0,
-        top: `${i * 20}px`,
+        top: `${i * unitSize}px`,
       }
     },
     getLineStyleV(i: number) {
       return {
         top: 0,
-        left: `${i * 20}px`,
+        left: `${i * unitSize}px`,
       }
     },
     loadKifu(sgf: string) {
       const { turns } = parseSgf(sgf)
       this.turns = turns
+      this.turnIndex = turns.length - 1
     },
   },
 })
 </script>
 
 <style scoped lang="scss">
+.control {
+  display: flex;
+  flex-direction: row;
+}
+.board {
+  background: rgb(218, 163, 75);
+}
 .lines {
   position: relative;
-  width: 360px;
-  height: 360px;
+  width: 720px;
+  height: 720px;
 
   .lineH,
   .lineV {
@@ -112,11 +196,17 @@ export default Vue.extend({
   }
 }
 
+.useFilter {
+  .stoneContainerContainer {
+    filter: url(#colormatrix);
+  }
+  .stoneContainer {
+    filter: url(#blur);
+  }
+}
 .stone {
   position: absolute;
-  width: 16px;
-  height: 16px;
-  border: 1px solid #000;
+  // border: 1px solid #000;
   border-radius: 100%;
 }
 
