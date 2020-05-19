@@ -133,7 +133,7 @@
                 :x2="item.p1.x * unitSize"
                 :y2="item.p1.y * unitSize"
                 stroke="black"
-                :stroke-width="(30 * edgeScale) / item.distance"
+                :stroke-width="(10 * edgeScale) / item.distance + 5"
               />
             </g>
           </g>
@@ -156,7 +156,7 @@
                 :x2="item.p1.x * unitSize"
                 :y2="item.p1.y * unitSize"
                 stroke="#fff"
-                :stroke-width="(30 * edgeScale) / item.distance"
+                :stroke-width="(10 * edgeScale) / item.distance + 5"
               />
             </g>
           </g>
@@ -204,9 +204,9 @@ export default Vue.extend({
     return {
       turnIndex: 0,
       turns: [] as KifuTurn[],
-      blur: 4,
-      stoneScale: 1,
-      edgeScale: 1,
+      blur: 3.9,
+      stoneScale: 0.9,
+      edgeScale: 0.2,
       useFilter: true,
       unitSize,
       kifuList: parsedKifuList,
