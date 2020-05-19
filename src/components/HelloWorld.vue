@@ -23,8 +23,8 @@
 
       <label>
         blur
-        <p>{{ blur }}</p>
-        <input v-model.number="blur" type="range" min="1" max="30" step="1" />
+        <p>{{ blur.toFixed(2) }}</p>
+        <input v-model.number="blur" type="range" min="1" max="10" step="any" />
       </label>
       <label>
         stoneScale
@@ -32,11 +32,31 @@
         <input
           v-model.number="stoneScale"
           type="range"
-          min="0.5"
-          max="2"
+          min="0.2"
+          max="1.5"
           step="any"
         />
       </label>
+      <label>
+        edgeScale
+        <p>{{ edgeScale.toFixed(2) }}</p>
+        <input
+          v-model.number="edgeScale"
+          type="range"
+          min="0"
+          max="1.5"
+          step="any"
+        />
+      </label>
+      <select v-model="selectedKifu">
+        <option
+          v-for="(kifu, i) in kifuList"
+          :key="i"
+          :value="kifu"
+          :label="kifu.head.GN || kifu.head.EV"
+        ></option>
+      </select>
+
       <button @click="check">check</button>
     </section>
 
@@ -93,7 +113,7 @@
             :key="`stoneB${i}`"
             :cx="item.pt.x * unitSize"
             :cy="item.pt.y * unitSize"
-            :r="unitSize * 0.5"
+            :r="unitSize * 0.5 * stoneScale"
           />
           <line
             v-for="(item, i) in neighborsBlack"
@@ -103,7 +123,7 @@
             :x2="item.p1.x * unitSize"
             :y2="item.p1.y * unitSize"
             stroke="black"
-            :stroke-width="30 / item.distance"
+            :stroke-width="(30 * edgeScale) / item.distance"
           />
         </g>
       </g>
@@ -115,7 +135,7 @@
             :key="`stoneW${i}`"
             :cx="item.pt.x * unitSize"
             :cy="item.pt.y * unitSize"
-            :r="unitSize * 0.5"
+            :r="unitSize * 0.5 * stoneScale"
             fill="#fff"
           />
           <line
@@ -126,10 +146,26 @@
             :x2="item.p1.x * unitSize"
             :y2="item.p1.y * unitSize"
             stroke="#fff"
-            :stroke-width="30 / item.distance"
+            :stroke-width="(30 * edgeScale) / item.distance"
           />
         </g>
       </g>
+
+      <circle
+        v-for="(item, i) in turnsBlack"
+        :key="`stoneB${i}`"
+        :cx="item.pt.x * unitSize"
+        :cy="item.pt.y * unitSize"
+        :r="unitSize * 0.5 * stoneScale"
+      />
+      <circle
+        v-for="(item, i) in turnsWhite"
+        :key="`stoneW${i}`"
+        :cx="item.pt.x * unitSize"
+        :cy="item.pt.y * unitSize"
+        :r="unitSize * 0.5 * stoneScale"
+        fill="#fff"
+      />
     </svg>
   </div>
 </template>
@@ -139,10 +175,15 @@ import Vue from 'vue'
 
 import { parseSgf } from '@/utils/kifuParser'
 import { Point } from '@/utils/Point'
+import { kifuList } from '@/assets/kifuList'
 
-const kifuData = `(;GM[1]FF[4]SZ[19]PB[林立祥]BR[七段]PW[許皓鋐]WR[六段]KM[6.5]RE[W+R]DT[2020-05-18]GN[第10期友士杯十段戦挑戦手合五番勝負第4局];B[pd];W[dd];B[qp];W[dp];B[cq];W[dq];B[cp];W[do];B[bn];W[oq];B[po];W[lq];B[nc];W[fc];B[qi];W[md];B[nd];W[mf];B[cm];W[qd];B[qe];W[pe];B[re];W[pf];B[me];W[qh];B[rh];W[pi];B[qg];W[ph];B[qj];W[pj];B[pk];W[ok];B[rg];W[le];B[ne];W[nf];B[lf];W[ke];B[kc];W[pl];B[qk];W[nl];B[om];W[ol];B[rm];W[lb];B[lc];W[pc];B[od];W[mc];B[mb];W[ld];B[nb];W[kb];B[jc];W[jb];B[ic];W[ib];B[of];W[og];B[oe];W[jf];B[pg];W[ng];B[oh];W[nh];B[oj];W[oi];B[nj];W[ni];B[mj];W[li];B[lj];W[ll];B[ki];W[kj];B[kg];W[lh];B[ie];W[jg];B[ec];W[fd];B[gb];W[hc];B[fb];W[hd];B[ed];W[ee];B[dc];W[cc];B[cb];W[de];B[bc];W[cd];B[bb];W[jj];B[ff];W[id];B[je];W[jd];B[dg];W[fg];B[kq];W[kp];B[jq];W[lr];B[jp];W[ko];B[gq];W[cr];B[br];W[jo];B[ho];W[dm];B[dl];W[el];B[dn];W[en];B[em];W[fm];B[eo];W[dm];B[kf];W[kd];B[em];W[fn];B[fo];W[dm];B[cn];W[dk];B[cl];W[di];B[bg];W[eg];B[io];W[ck];B[be];W[in];B[hn];W[hm];B[dh];W[ei];B[pq];W[hq];B[hp];W[gr];B[fq];W[ir];B[fr];W[jr];B[gm];W[hl];B[gn];W[gl];B[or];W[nr];B[op];W[nq];B[ln];W[fs];B[es];W[gs];B[dr];W[kr];B[ip];W[mo];B[mn];W[qm];B[mm];W[ml];B[qn];W[kn];B[im];W[jn];B[lo];W[lp];B[pr];W[rl];B[ql];W[pm])`
+const parsedKifuList = kifuList.map((kifu) => parseSgf(kifu)) as Kifu[]
 
 type KifuTurn = { type: string; pt: Point }
+type Kifu = {
+  head: Record<string, string>
+  turns: KifuTurn[]
+}
 
 const unitSize = 40
 
@@ -151,10 +192,13 @@ export default Vue.extend({
     return {
       turnIndex: 0,
       turns: [] as KifuTurn[],
-      blur: 10,
+      blur: 4,
       stoneScale: 1,
+      edgeScale: 1,
       useFilter: true,
       unitSize,
+      kifuList: parsedKifuList,
+      selectedKifu: parsedKifuList[0],
     }
   },
   computed: {
@@ -243,40 +287,18 @@ export default Vue.extend({
       )
     },
   },
-  mounted() {
-    this.loadKifu(kifuData)
+  watch: {
+    selectedKifu: {
+      immediate: true,
+      handler(val: Kifu) {
+        this.turns = val.turns
+        this.turnIndex = val.turns.length - 1
+      },
+    },
   },
   methods: {
     check() {
       console.log(this.neighborsBlack)
-    },
-    getStoneStyle(turn: KifuTurn) {
-      const { type, pt } = turn
-      const stoneScale = this.useFilter ? this.stoneScale : 0.85
-      return {
-        left: `${(pt.x - 0.5) * unitSize}px`,
-        top: `${(pt.y - 0.5) * unitSize}px`,
-        background: type === 'B' ? '#000' : '#fff',
-        width: `${stoneScale * unitSize}px`,
-        height: `${stoneScale * unitSize}px`,
-      }
-    },
-    getLineStyleH(i: number) {
-      return {
-        left: 0,
-        top: `${i * unitSize}px`,
-      }
-    },
-    getLineStyleV(i: number) {
-      return {
-        top: 0,
-        left: `${i * unitSize}px`,
-      }
-    },
-    loadKifu(sgf: string) {
-      const { turns } = parseSgf(sgf)
-      this.turns = turns
-      this.turnIndex = turns.length - 1
     },
   },
 })
