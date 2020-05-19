@@ -37,9 +37,10 @@
           step="any"
         />
       </label>
+      <button @click="check">check</button>
     </section>
 
-    <svg>
+    <svg :viewBox="`0 0 ${unitSize * 18} ${unitSize * 18}`">
       <defs>
         <filter id="blur">
           <feGaussianBlur
@@ -60,45 +61,76 @@
           <feComposite in="SourceGraphic" in2="matrix" operator="atop" />
         </filter>
       </defs>
-    </svg>
 
-    <div class="board" :class="{ useFilter }">
-      <div class="lines">
-        <div
+      <g>
+        <rect
+          x="0"
+          y="0"
+          :width="unitSize * 18"
+          :height="unitSize * 18"
+          fill="rgb(218, 163, 75)"
+        />
+        <polyline
           v-for="i in [...Array(19)].keys()"
           :key="`lineV${i}`"
-          class="lineV"
-          :style="getLineStyleV(i)"
-        ></div>
-        <div
+          fill="none"
+          stroke="black"
+          :points="`${unitSize * i},0 ${unitSize * i},${unitSize * 18}`"
+        />
+        <polyline
           v-for="i in [...Array(19)].keys()"
           :key="`lineH${i}`"
-          class="lineH"
-          :style="getLineStyleH(i)"
-        ></div>
+          fill="none"
+          stroke="black"
+          :points="`0,${unitSize * i} ${unitSize * 18},${unitSize * i}`"
+        />
+      </g>
 
-        <div class="stoneContainerContainer">
-          <div class="stoneContainer">
-            <div
-              v-for="(item, i) in turnsBlack"
-              :key="`stoneB${i}`"
-              class="stone"
-              :style="getStoneStyle(item)"
-            ></div>
-          </div>
-        </div>
-        <div class="stoneContainerContainer">
-          <div class="stoneContainer">
-            <div
-              v-for="(item, i) in turnsWhite"
-              :key="`stoneW${i}`"
-              class="stone"
-              :style="getStoneStyle(item)"
-            ></div>
-          </div>
-        </div>
-      </div>
-    </div>
+      <g :filter="useFilter && `url(#colormatrix)`">
+        <g :filter="useFilter && `url(#blur)`">
+          <circle
+            v-for="(item, i) in turnsBlack"
+            :key="`stoneB${i}`"
+            :cx="item.pt.x * unitSize"
+            :cy="item.pt.y * unitSize"
+            :r="unitSize * 0.5"
+          />
+          <line
+            v-for="(item, i) in neighborsBlack"
+            :key="`neighborsB${i}`"
+            :x1="item.p0.x * unitSize"
+            :y1="item.p0.y * unitSize"
+            :x2="item.p1.x * unitSize"
+            :y2="item.p1.y * unitSize"
+            stroke="black"
+            :stroke-width="30 / item.distance"
+          />
+        </g>
+      </g>
+
+      <g :filter="useFilter && `url(#colormatrix)`">
+        <g :filter="useFilter && `url(#blur)`">
+          <circle
+            v-for="(item, i) in turnsWhite"
+            :key="`stoneW${i}`"
+            :cx="item.pt.x * unitSize"
+            :cy="item.pt.y * unitSize"
+            :r="unitSize * 0.5"
+            fill="#fff"
+          />
+          <line
+            v-for="(item, i) in neighborsWhite"
+            :key="`neighborsW${i}`"
+            :x1="item.p0.x * unitSize"
+            :y1="item.p0.y * unitSize"
+            :x2="item.p1.x * unitSize"
+            :y2="item.p1.y * unitSize"
+            stroke="#fff"
+            :stroke-width="30 / item.distance"
+          />
+        </g>
+      </g>
+    </svg>
   </div>
 </template>
 
@@ -122,6 +154,7 @@ export default Vue.extend({
       blur: 10,
       stoneScale: 1,
       useFilter: true,
+      unitSize,
     }
   },
   computed: {
@@ -130,16 +163,93 @@ export default Vue.extend({
         .slice(0, this.turnIndex)
         .filter(({ type }) => type === 'B')
     },
+    distanceBlack(): { index: number; distance: number }[][] {
+      const distanceList = this.turnsBlack.map((turn, i, array) => {
+        const list = array.slice(i + 1).map((target, j) => {
+          return {
+            index: i + j + 1,
+            distance: turn.pt.getDistance(target.pt),
+          }
+        })
+        return list
+      })
+      return distanceList
+    },
+    neighborsBlack(): { p0: Point; p1: Point; distance: number }[] {
+      return this.distanceBlack.reduce(
+        (
+          acc: { p0: Point; p1: Point; distance: number }[],
+          distanceList,
+          i
+        ) => {
+          const list = distanceList.filter(
+            ({ distance }) => 1 < distance && distance <= 5
+          )
+
+          return [
+            ...acc,
+            ...list.map((item) => {
+              return {
+                p0: this.turnsBlack[i].pt,
+                p1: this.turnsBlack[item.index].pt,
+                distance: item.distance,
+              }
+            }),
+          ]
+        },
+        []
+      )
+    },
     turnsWhite(): KifuTurn[] {
       return this.turns
         .slice(0, this.turnIndex)
         .filter(({ type }) => type === 'W')
+    },
+    distanceWhite(): { index: number; distance: number }[][] {
+      const distanceList = this.turnsWhite.map((turn, i, array) => {
+        const list = array.slice(i + 1).map((target, j) => {
+          return {
+            index: i + j + 1,
+            distance: turn.pt.getDistance(target.pt),
+          }
+        })
+        return list
+      })
+      return distanceList
+    },
+    neighborsWhite(): { p0: Point; p1: Point; distance: number }[] {
+      return this.distanceWhite.reduce(
+        (
+          acc: { p0: Point; p1: Point; distance: number }[],
+          distanceList,
+          i
+        ) => {
+          const list = distanceList.filter(
+            ({ distance }) => 1 < distance && distance <= 5
+          )
+
+          return [
+            ...acc,
+            ...list.map((item) => {
+              return {
+                p0: this.turnsWhite[i].pt,
+                p1: this.turnsWhite[item.index].pt,
+                distance: item.distance,
+              }
+            }),
+          ]
+        },
+        []
+      )
     },
   },
   mounted() {
     this.loadKifu(kifuData)
   },
   methods: {
+    check() {
+      console.log(this.neighborsBlack)
+    },
     getStoneStyle(turn: KifuTurn) {
       const { type, pt } = turn
       const stoneScale = this.useFilter ? this.stoneScale : 0.85
