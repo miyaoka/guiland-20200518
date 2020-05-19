@@ -310,6 +310,7 @@ export default Vue.extend({
   },
   methods: {
     check() {
+      // eslint-disable-next-line no-console
       console.log(this.neighborsBlack)
     },
   },
