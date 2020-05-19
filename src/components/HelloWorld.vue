@@ -60,7 +60,7 @@
       <button @click="check">check</button>
     </section>
 
-    <svg :viewBox="`0 0 ${unitSize * 18} ${unitSize * 18}`">
+    <svg :viewBox="`0 0 ${unitSize * 20} ${unitSize * 20}`">
       <defs>
         <filter id="blur">
           <feGaussianBlur
@@ -86,28 +86,81 @@
         <rect
           x="0"
           y="0"
-          :width="unitSize * 18"
-          :height="unitSize * 18"
-          fill="rgb(218, 163, 75)"
+          :width="unitSize * 20"
+          :height="unitSize * 20"
+          fill="#cc9"
         />
-        <polyline
-          v-for="i in [...Array(19)].keys()"
-          :key="`lineV${i}`"
-          fill="none"
-          stroke="black"
-          :points="`${unitSize * i},0 ${unitSize * i},${unitSize * 18}`"
-        />
-        <polyline
-          v-for="i in [...Array(19)].keys()"
-          :key="`lineH${i}`"
-          fill="none"
-          stroke="black"
-          :points="`0,${unitSize * i} ${unitSize * 18},${unitSize * i}`"
-        />
-      </g>
 
-      <g :filter="useFilter && `url(#colormatrix)`">
-        <g :filter="useFilter && `url(#blur)`">
+        <g :transform="`translate(${unitSize} ${unitSize})`">
+          <g>
+            <rect
+              x="0"
+              y="0"
+              :width="unitSize * 18"
+              :height="unitSize * 18"
+              fill="rgb(218, 163, 75)"
+            />
+            <polyline
+              v-for="i in [...Array(19)].keys()"
+              :key="`lineV${i}`"
+              fill="none"
+              stroke="black"
+              :points="`${unitSize * i},0 ${unitSize * i},${unitSize * 18}`"
+            />
+            <polyline
+              v-for="i in [...Array(19)].keys()"
+              :key="`lineH${i}`"
+              fill="none"
+              stroke="black"
+              :points="`0,${unitSize * i} ${unitSize * 18},${unitSize * i}`"
+            />
+          </g>
+
+          <g :filter="useFilter && `url(#colormatrix)`">
+            <g :filter="useFilter && `url(#blur)`">
+              <circle
+                v-for="(item, i) in turnsBlack"
+                :key="`stoneB${i}`"
+                :cx="item.pt.x * unitSize"
+                :cy="item.pt.y * unitSize"
+                :r="unitSize * 0.5 * stoneScale"
+              />
+              <line
+                v-for="(item, i) in neighborsBlack"
+                :key="`neighborsB${i}`"
+                :x1="item.p0.x * unitSize"
+                :y1="item.p0.y * unitSize"
+                :x2="item.p1.x * unitSize"
+                :y2="item.p1.y * unitSize"
+                stroke="black"
+                :stroke-width="(30 * edgeScale) / item.distance"
+              />
+            </g>
+          </g>
+
+          <g :filter="useFilter && `url(#colormatrix)`">
+            <g :filter="useFilter && `url(#blur)`">
+              <circle
+                v-for="(item, i) in turnsWhite"
+                :key="`stoneW${i}`"
+                :cx="item.pt.x * unitSize"
+                :cy="item.pt.y * unitSize"
+                :r="unitSize * 0.5 * stoneScale"
+                fill="#fff"
+              />
+              <line
+                v-for="(item, i) in neighborsWhite"
+                :key="`neighborsW${i}`"
+                :x1="item.p0.x * unitSize"
+                :y1="item.p0.y * unitSize"
+                :x2="item.p1.x * unitSize"
+                :y2="item.p1.y * unitSize"
+                stroke="#fff"
+                :stroke-width="(30 * edgeScale) / item.distance"
+              />
+            </g>
+          </g>
+
           <circle
             v-for="(item, i) in turnsBlack"
             :key="`stoneB${i}`"
@@ -115,21 +168,6 @@
             :cy="item.pt.y * unitSize"
             :r="unitSize * 0.5 * stoneScale"
           />
-          <line
-            v-for="(item, i) in neighborsBlack"
-            :key="`neighborsB${i}`"
-            :x1="item.p0.x * unitSize"
-            :y1="item.p0.y * unitSize"
-            :x2="item.p1.x * unitSize"
-            :y2="item.p1.y * unitSize"
-            stroke="black"
-            :stroke-width="(30 * edgeScale) / item.distance"
-          />
-        </g>
-      </g>
-
-      <g :filter="useFilter && `url(#colormatrix)`">
-        <g :filter="useFilter && `url(#blur)`">
           <circle
             v-for="(item, i) in turnsWhite"
             :key="`stoneW${i}`"
@@ -138,34 +176,8 @@
             :r="unitSize * 0.5 * stoneScale"
             fill="#fff"
           />
-          <line
-            v-for="(item, i) in neighborsWhite"
-            :key="`neighborsW${i}`"
-            :x1="item.p0.x * unitSize"
-            :y1="item.p0.y * unitSize"
-            :x2="item.p1.x * unitSize"
-            :y2="item.p1.y * unitSize"
-            stroke="#fff"
-            :stroke-width="(30 * edgeScale) / item.distance"
-          />
         </g>
       </g>
-
-      <circle
-        v-for="(item, i) in turnsBlack"
-        :key="`stoneB${i}`"
-        :cx="item.pt.x * unitSize"
-        :cy="item.pt.y * unitSize"
-        :r="unitSize * 0.5 * stoneScale"
-      />
-      <circle
-        v-for="(item, i) in turnsWhite"
-        :key="`stoneW${i}`"
-        :cx="item.pt.x * unitSize"
-        :cy="item.pt.y * unitSize"
-        :r="unitSize * 0.5 * stoneScale"
-        fill="#fff"
-      />
     </svg>
   </div>
 </template>
