@@ -66,13 +66,13 @@
       <div class="lines">
         <div
           v-for="i in [...Array(19)].keys()"
-          :key="i"
+          :key="`lineV${i}`"
           class="lineV"
           :style="getLineStyleV(i)"
         ></div>
         <div
           v-for="i in [...Array(19)].keys()"
-          :key="i"
+          :key="`lineH${i}`"
           class="lineH"
           :style="getLineStyleH(i)"
         ></div>
@@ -81,7 +81,7 @@
           <div class="stoneContainer">
             <div
               v-for="(item, i) in turnsBlack"
-              :key="i"
+              :key="`stoneB${i}`"
               class="stone"
               :style="getStoneStyle(item)"
             ></div>
@@ -91,7 +91,7 @@
           <div class="stoneContainer">
             <div
               v-for="(item, i) in turnsWhite"
-              :key="i"
+              :key="`stoneW${i}`"
               class="stone"
               :style="getStoneStyle(item)"
             ></div>
