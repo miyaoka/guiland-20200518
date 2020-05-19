@@ -1,3 +1,5 @@
+import { Point } from './Point'
+
 const aCharCode = 'a'.charCodeAt(0)
 
 const getPoint = (str: string) => str.charCodeAt(0) - aCharCode
@@ -13,7 +15,10 @@ export const parseSgf = (input: string) => {
         const matched = turn.match(/^(?<bw>\w)\[(?<x>\w)(?<y>\w)\]$/)
         if (!matched?.groups) return null
         const { bw, x, y } = matched.groups
-        return [bw, getPoint(x), getPoint(y)] as const
+        return {
+          type: bw,
+          pt: new Point(getPoint(x), getPoint(y)),
+        }
       })
       .filter(<T>(item: T): item is NonNullable<T> => Boolean(item)),
   }
